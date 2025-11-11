@@ -1,0 +1,53 @@
+version: "3.8"
+services:
+  flower:
+    build: ./flower_server
+    image: local/flwr-aggregator:latest
+    ports:
+      - "8080:8080"
+    environment:
+      - NUM_ROUNDS=3
+      - MINIO_URL=http://minio:9000
+      - MINIO_USER=minio
+      - MINIO_PASS=minio123
+    depends_on:
+      - minio
+
+  fastapi_bridge:
+    build: ./fastapi_bridge
+    image: local/fastapi-bridge:latest
+    ports:
+      - "8000:8000"
+    environment:
+      - ORION_URL=http://orion:1026
+    depends_on:
+      - orion
+
+  minio:
+    image: minio/minio:latest
+    command: server /data
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio123
+    ports:
+      - "9000:9000"
+    volumes:
+      - minio-data:/data
+
+  orion:
+    image: fiware/orion-ld:3.4.0
+    ports:
+      - "1026:1026"
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo:4.4
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  minio-data:
+  mongo-data:

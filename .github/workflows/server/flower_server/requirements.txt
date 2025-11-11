@@ -1,0 +1,4 @@
+flwr==1.5.1
+numpy
+torch
+boto3

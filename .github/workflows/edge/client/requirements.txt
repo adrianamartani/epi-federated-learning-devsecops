@@ -1,0 +1,7 @@
+flwr==1.5.1
+numpy
+torch
+opencv-python-headless
+requests
+flask
+ultralytics==8.0.20
