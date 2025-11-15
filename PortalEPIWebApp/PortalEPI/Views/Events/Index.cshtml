@@ -1,0 +1,23 @@
+﻿@model List<PortalEPI.Models.EventRecord>
+
+<h2>MongoDB Events</h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Confidence</th>
+            <th>Device</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Date</td>
+                <td>@item.Confidence</td>
+                <td>@item.Device</td>
+            </tr>
+        }
+    </tbody>
+</table>

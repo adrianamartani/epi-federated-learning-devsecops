@@ -1,7 +1,18 @@
+using MongoDB.Driver;
+using PortalEPI.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+builder.Services.AddSingleton<IMongoClient>(sp =>
+{
+    var settings = builder.Configuration.GetSection("MongoDB");
+    return new MongoClient(settings["ConnectionString"]);
+});
+
+builder.Services.AddSingleton<EventService>();
 
 var app = builder.Build();
 
