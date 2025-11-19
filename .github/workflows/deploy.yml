@@ -17,7 +17,7 @@ jobs:
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
           repository: ${{ github.event.workflow_run.repository.full_name }}
-          token: ${{ secrets.GITHUB_TOKEN }} # Usa o token padrão do GitHub Actions
+          token: ${{ secrets.GITHUB_TOKEN }} 
       
       - name: Setup SSH key
         run: |
