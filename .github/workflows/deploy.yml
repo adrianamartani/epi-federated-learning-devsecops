@@ -17,6 +17,6 @@ jobs:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Copy deploy script and run on server
-        run: |
+        run: 
           scp -o StrictHostKeyChecking=no infra/deploy_on_server.sh ${{ secrets.SSH_USER }}@${{ secrets.AWS_HOST }}:/tmp/deploy_on_server.sh
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.AWS_HOST }} 'bash /tmp/deploy_on_server.sh'
