@@ -25,7 +25,7 @@ jobs:
       - name: Build and push Flower image
         uses: docker/build-push-action@v5
         with:
-          context: ./server/flower_server
+          context: C:\Users\adria\Downloads\epi-federated-learning-devsecops\.github\workflows\server\flower_server\Dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/flwr-aggregator:latest
 
