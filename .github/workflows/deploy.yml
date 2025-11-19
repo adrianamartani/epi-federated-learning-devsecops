@@ -1,4 +1,7 @@
 name: Deploy
+permissions:
+  contents: read
+  actions: read
 on:
   workflow_run:
     workflows: ["Build and Push"]
@@ -11,10 +14,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install ssh-agent
-        uses: webfactory/ssh-agent@v0.8.1
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Setup SSH key
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openssh-client
+          eval "$(ssh-agent -s)"
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-add ~/.ssh/id_rsa
 
       - name: Copy deploy script and run on server
         run: 
