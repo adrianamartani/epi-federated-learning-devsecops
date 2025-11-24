@@ -2,29 +2,34 @@
 FROM python:3.10-slim
 WORKDIR /app
 
-# Colocamos o requirements.txt antes de qualquer RUN que o utilize
+# 1. Copia o requirements.txt primeiro para otimizar o cache
 COPY requirements.txt .
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        # Ferramentas de compilação C/C++ (para flwr/numpy/outras)
-        build-essential \
-        # OBRIGATÓRIO para PyTorch (torch) em imagens slim
-        libstdc++6 \
-        # Adição útil para otimizações matemáticas
-        gfortran \
-    \
-    && pip install --no-cache-dir -r requirements.txt \
-    \
-    # Limpeza para reduzir o tamanho final da imagem:
-    # Remove as ferramentas de build que não são necessárias em runtime
-    && apt-get purge -y build-essential gfortran \
+# 2. INSTALAÇÃO DAS DEPENDÊNCIAS DE BUILD (Ferramentas de Compilação e Bibliotecas Essenciais)
+# MANTENHA ESTA ETAPA SEPARADA!
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libstdc++6 \
+    gfortran \
+    libssl-dev \
+    libffi-dev \
+    # Adicionar libhdf5-dev se o flwr/torch usar HDF5. Descomentar se necessário.
+    # libhdf5-dev \
+    && rm -rf /var/lib/apt/lists/*
+    
+# 3. INSTALAÇÃO DAS DEPENDÊNCIAS PYTHON
+# ESTA É A LINHA QUE ESTAVA FALHANDO. Agora ela é uma camada de build única.
+RUN pip install --no-cache-dir -r requirements.txt
+
+# 4. LIMPEZA FINAL (Remove as ferramentas de build que não são necessárias em runtime)
+# MANTENHA ESTA ETAPA SEPARADA!
+RUN apt-get purge -y build-essential gfortran libssl-dev libffi-dev \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# 2. Copia o código da aplicação
+# 5. Copia o código da aplicação
 COPY app.py .
 
-# 3. Define o comando de execução
+# 6. Define o comando de execução
 CMD ["python", "app.py"]
