@@ -1,42 +1,38 @@
-# Usa uma imagem Python leve e estável
+# Dockerfile do flower_server (Versão FINAL)
 FROM python:3.10-slim
-
-# Define o diretório de trabalho no container
 WORKDIR /app
 
-# 1. Copia apenas o requirements.txt (Melhora o cache)
-# Se o requirements.txt não mudar, as próximas camadas não precisam ser reconstruídas.
+# 1. Copia o requirements.txt (AGORA SEM O PACOTE 'torch')
 COPY requirements.txt .
 
-# 2. INSTALAÇÃO DAS DEPENDÊNCIAS DO SISTEMA (Build e Runtime)
-# Resolve o problema do "apt-get exit code: 100" e o "pip install exit code: 1"
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        # Ferramentas de compilação (necessário para PyTorch/NumPy/flwr)
-        build-essential \
-        gfortran \
-        # Bibliotecas de Runtime e Headers (essenciais para PyTorch/SSL/OpenBLAS)
-        libstdc++6 \
-        libssl-dev \
-        libffi-dev \
-        libopenblas-dev \
-        libgomp1 \
+# 2. INSTALAÇÃO DE DEPENDÊNCIAS DE SISTEMA
+# Removemos a maioria das ferramentas de build (build-essential, gfortran, etc.)
+# e mantemos APENAS as bibliotecas de runtime essenciais.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    # Mantemos bibliotecas essenciais para SSL, OpenBLAS e Runtime
+    libssl-dev \
+    libffi-dev \
+    libopenblas-dev \
+    libgomp1 \
     && rm -rf /var/lib/apt/lists/*
     
-# 3. INSTALAÇÃO DAS DEPENDÊNCIAS PYTHON
-# Esta etapa é isolada e garantida pelas ferramentas instaladas acima.
+# 3. INSTALAÇÃO DE DEPENDÊNCIAS PYTHON (flwr, numpy, boto3)
+# O flwr e o numpy agora instalam sem problemas.
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 4. LIMPEZA FINAL DA IMAGEM
-# Remove as ferramentas de desenvolvimento (build-essential, gfortran) 
-# para reduzir o tamanho da imagem, mas MANTÉM as bibliotecas de runtime necessárias.
-RUN apt-get purge -y build-essential gfortran \
-    && apt-get autoremove -y \
-    && apt-get clean
+# 4. INSTALAÇÃO DO PYTORCH VIA WHEEL PRÉ-COMPILADO
+# Forçamos o uso do índice de wheels do PyTorch, que garante a instalação de um binário compatível com CPU.
+# Use a URL de índice para a versão mais recente do PyTorch que suporte Python 3.10
+RUN pip install torch --index-url https://download.pytorch.org/whl/cpu
 
-# 5. Copia o código da aplicação
+# 5. LIMPEZA FINAL DA IMAGEM
+# Mantemos apenas a limpeza de cache.
+RUN apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# 6. Copia o código da aplicação
 COPY app.py .
-# Se houver outros arquivos/diretórios, use: COPY . .
 
-# 6. Define o comando de execução
+# 7. Define o comando de execução
 CMD ["python", "app.py"]
