@@ -4,6 +4,12 @@ on:
   push:
     branches: [ "main" ]
 
+# Define as variáveis comuns para o nome do usuário e tags de imagem
+env:
+  DOCKER_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+  # Define a tag 'latest' e uma tag baseada no SHA do commit para rastreabilidade
+  IMAGE_TAGS: latest,sha-${{ github.sha }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -12,27 +18,35 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up QEMU (Necessário para builds Multi-Arch)
+        # Embora não esteja explicitamente no seu código, é uma boa prática para builds modernos
+        uses: docker/setup-qemu-action@v3
+      
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          username: ${{ env.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Build Flower Server Image
+      # 1. Build e Push da Imagem Flower Server
       - name: Build and push Flower image
         uses: docker/build-push-action@v5
         with:
           context: ./.github/workflows/server/flower_server
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/flwr-aggregator:latest
+          # Combina o nome do repositório com as tags definidas na ENV
+          tags: |
+            ${{ env.DOCKER_USERNAME }}/flwr-aggregator:${{ env.IMAGE_TAGS }}
 
-      # Build FastAPI Bridge Image
+      # 2. Build e Push da Imagem FastAPI Bridge
       - name: Build and push FastAPI Bridge image
         uses: docker/build-push-action@v5
         with:
           context: ./server/fastapi_bridge
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/fastapi-bridge:latest
+          # Combina o nome do repositório com as tags definidas na ENV
+          tags: |
+            ${{ env.DOCKER_USERNAME }}/fastapi-bridge:${{ env.IMAGE_TAGS }}
