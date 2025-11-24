@@ -2,7 +2,7 @@
 FROM python:3.10-slim
 WORKDIR /app
 
-COPY requirements.txt . # Deve conter flwr, numpy, boto3
+COPY requirements.txt . 
 
 # 2. INSTALAÇÃO DE DEPENDÊNCIAS DE SISTEMA (REFORÇADA)
 RUN apt-get update && apt-get install -y --no-install-recommends \
