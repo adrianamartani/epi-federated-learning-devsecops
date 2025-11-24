@@ -1,20 +1,30 @@
+# Flower Server Dockerfile
 FROM python:3.10-slim
 WORKDIR /app
+
+# Colocamos o requirements.txt antes de qualquer RUN que o utilize
 COPY requirements.txt .
 
-# 1. Instalação das dependências do sistema
-RUN apt-get update
-RUN apt-get install -y --no-install-recommends build-essential
-
-# 2. Instalação das dependências do Python
-# SE ESTA LINHA FALHAR, o problema está no requirements.txt ou em uma biblioteca de sistema faltante.
-RUN pip install --no-cache-dir -r requirements.txt
-
-# 3. Limpeza (Otimização do tamanho da imagem)
-RUN apt-get purge -y build-essential \
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        # Ferramentas de compilação C/C++ (para flwr/numpy/outras)
+        build-essential \
+        # OBRIGATÓRIO para PyTorch (torch) em imagens slim
+        libstdc++6 \
+        # Adição útil para otimizações matemáticas
+        gfortran \
+    \
+    && pip install --no-cache-dir -r requirements.txt \
+    \
+    # Limpeza para reduzir o tamanho final da imagem:
+    # Remove as ferramentas de build que não são necessárias em runtime
+    && apt-get purge -y build-essential gfortran \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+# 2. Copia o código da aplicação
 COPY app.py .
+
+# 3. Define o comando de execução
 CMD ["python", "app.py"]
